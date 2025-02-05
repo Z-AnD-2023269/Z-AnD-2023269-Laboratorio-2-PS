@@ -1,116 +1,128 @@
 import { hash } from "argon2";
-import User from "./user.model.js"
+import User from "./user.model.js";
 
 export const getUserById = async (req, res) => {
-    try{
+    try {
         const { uid } = req.params;
-        const user = await User.findById(uid)
+        const user = await User.findById(uid);
 
-        if(!user){
+        if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "Usuario no encontrado"
-            })
+            });
         }
 
         return res.status(200).json({
             success: true,
             user
-        })
-
-    }catch(err){
+        });
+    } catch (err) {
         return res.status(500).json({
             success: false,
             message: "Error al obtener el usuario",
             error: err.message
-        })
+        });
     }
-}
+};
+
+export const updateProfilePicture = async (req, res) => {
+    try {
+        const { uid } = req.params;
+        const { profilePicture } = req.body;
+
+        const user = await User.findByIdAndUpdate(uid, { profilePicture }, { new: true });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        res.json({ message: 'Profile picture updated', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error });
+    }
+};
 
 export const getUsers = async (req, res) => {
-    try{
-        const { limite = 5, desde = 0 } = req.query
-        const query = { status: true }
+    try {
+        const { limite = 5, desde = 0 } = req.query;
+        const query = { status: true };
 
-        const [total, users ] = await Promise.all([
+        const [total, users] = await Promise.all([
             User.countDocuments(query),
             User.find(query)
                 .skip(Number(desde))
                 .limit(Number(limite))
-        ])
+        ]);
 
         return res.status(200).json({
             success: true,
             total,
             users
-        })
-    }catch(err){
+        });
+    } catch (err) {
         return res.status(500).json({
             success: false,
             message: "Error al obtener los usuarios",
             error: err.message
-        })
+        });
     }
-}
+};
 
 export const deleteUser = async (req, res) => {
-    try{
-        const { uid } = req.params
+    try {
+        const { uid } = req.params;
         
-        const user = await User.findByIdAndUpdate(uid, {status: false}, {new: true})
+        const user = await User.findByIdAndUpdate(uid, { status: false }, { new: true });
 
         return res.status(200).json({
             success: true,
             message: "Usuario eliminado",
             user
-        })
-    }catch(err){
+        });
+    } catch (err) {
         return res.status(500).json({
             success: false,
             message: "Error al eliminar el usuario",
             error: err.message
-        })
+        });
     }
-}
+};
 
 export const updatePassword = async (req, res) => {
-    try{
-        const { uid } = req.params
-        const { newPassword } = req.body
+    try {
+        const { uid } = req.params;
+        const { newPassword } = req.body;
 
-        const user = await User.findById(uid)
+        const user = await User.findById(uid);
 
-        const matchOldAndNewPassword = await verify(user.password, newPassword)
+        const matchOldAndNewPassword = await verify(user.password, newPassword);
 
-        if(matchOldAndNewPassword){
+        if (matchOldAndNewPassword) {
             return res.status(400).json({
                 success: false,
                 message: "La nueva contraseña no puede ser igual a la anterior"
-            })
+            });
         }
 
-        const encryptedPassword = await hash(newPassword)
+        const encryptedPassword = await hash(newPassword);
 
-        await User.findByIdAndUpdate(uid, {password: encryptedPassword}, {new: true})
+        await User.findByIdAndUpdate(uid, { password: encryptedPassword }, { new: true });
 
         return res.status(200).json({
             success: true,
             message: "Contraseña actualizada",
-        })
-
-    }catch(err){
+        });
+    } catch (err) {
         return res.status(500).json({
             success: false,
             message: "Error al actualizar contraseña",
             error: err.message
-        })
+        });
     }
-}
+};
 
 export const updateUser = async (req, res) => {
     try {
         const { uid } = req.params;
-        const  data  = req.body;
+        const data = req.body;
 
         const user = await User.findByIdAndUpdate(uid, data, { new: true });
 
@@ -126,4 +138,4 @@ export const updateUser = async (req, res) => {
             error: err.message
         });
     }
-}
+};
